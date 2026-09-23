@@ -4,16 +4,20 @@ import json
 import os
 import uuid
 import zipfile
-from dotenv import load_dotenv
 from google import genai
 import streamlit as st
+
+# Tenta carregar o dotenv localmente; no Streamlit Cloud o segredo virá de st.secrets
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Configuração da página
 st.set_page_config(
     page_title="Gerador de Accordion H5P", page_icon="🗂️", layout="wide"
 )
-
-load_dotenv()
 
 # Recupera chave da API (localmente do .env ou das Secrets do Streamlit Cloud)
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
@@ -81,7 +85,7 @@ if btn_gerar:
         st.warning("Por favor, informe o **Tema**.")
     elif not api_key:
         st.error(
-            "Chave GEMINI_API_KEY não foi encontrada nas variáveis de ambiente."
+            "Chave GEMINI_API_KEY não foi encontrada nas variáveis de ambiente ou Secrets."
         )
     else:
         status_area.text("⏳ Gerando conteúdo com IA...")
@@ -115,7 +119,7 @@ Formato obrigatório:
 ]"""
 
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-1.5-flash",
                 contents=prompt,
             )
 
