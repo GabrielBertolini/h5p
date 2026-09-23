@@ -100,8 +100,8 @@ if btn_gerar:
             molde_bytes = base64.b64decode(b64_string)
             molde_buffer = io.BytesIO(molde_bytes)
 
-            # 2. Chama a API do Gemini
-            client = genai.Client(api_key=api_key)
+            # 2. Chama a API do Gemini (forçando a api_version v1)
+            client = genai.Client(api_key=api_key, http_options={'api_version': 'v1'})
             prompt = f"""Você é um assistente pedagógico. Crie um conteúdo para a ferramenta Accordion do H5P.
 Tema: {tema}
 Número de painéis: {num_paineis}
@@ -119,7 +119,7 @@ Formato obrigatório:
 ]"""
 
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 contents=prompt,
             )
 
