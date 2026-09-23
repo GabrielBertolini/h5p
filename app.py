@@ -53,7 +53,7 @@ with col_form:
     texto_fonte = st.text_area(
         "Texto fonte",
         help="Adicionar material de apoio gera resultados mais personalizados.",
-        placeholder="Cole aqui o texto que deve ser organizado...",
+        placeholder="Cole aqui o texto para apoio...",
     )
 
     col1, col2 = st.columns(2)
