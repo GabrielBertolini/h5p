@@ -71,7 +71,7 @@ with col_form:
 with col_info:
     status_container = st.container(border=True)
     with status_container:
-        st.subheader("Status da Geração")
+        st.subheader("Status da Geração", anchor=False)
         status_area = st.empty()
         
         # Reservando a área do botão logo abaixo da mensagem de status
