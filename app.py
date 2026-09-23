@@ -5,6 +5,7 @@ import os
 import uuid
 import zipfile
 from google import genai
+from google.genai import types
 import streamlit as st
 
 # Tenta carregar o dotenv localmente; no Streamlit Cloud o segredo virá de st.secrets
@@ -100,8 +101,9 @@ if btn_gerar:
             molde_bytes = base64.b64decode(b64_string)
             molde_buffer = io.BytesIO(molde_bytes)
 
-            # 2. Chama a API do Gemini
+            # 2. Inicializa o cliente e chama a API
             client = genai.Client(api_key=api_key)
+
             prompt = f"""Você é um assistente pedagógico. Crie um conteúdo para a ferramenta Accordion do H5P.
 Tema: {tema}
 Número de painéis: {num_paineis}
@@ -109,47 +111,25 @@ Extensão aproximada: {extensao}
 Instruções adicionais: {instrucao}
 Texto base: {texto_fonte}
 
-Responda EXCLUSIVAMENTE com um array JSON válido sem marcadores Markdown.
-Formato obrigatório:
+Crie uma lista JSON de painéis.
+Formato obrigatório por item:
 [
   {{
     "title": "Título do Painel",
-    "content": "<p>Conteúdo do painel.</p>"
+    "content": "<p>Conteúdo do painel em HTML.</p>"
   }}
 ]"""
 
-            # Lista de modelos ordenados do mais recente ao de fallback
-            modelos_disponiveis = [
-                "gemini-3.6-flash",
-                "gemini-2.5-flash",
-                "gemini-1.5-flash"
-            ]
+            # Chamada com resposta forçada em JSON e modelo atualizado
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                ),
+            )
 
-            response = None
-            ultimo_erro = None
-
-            for mod in modelos_disponiveis:
-                try:
-                    response = client.models.generate_content(
-                        model=mod,
-                        contents=prompt,
-                    )
-                    if response:
-                        break
-                except Exception as err:
-                    ultimo_erro = err
-                    continue
-
-            if not response:
-                raise Exception(f"Falha ao chamar a API do Gemini: {ultimo_erro}")
-
-            texto_resposta = response.text.strip()
-            if texto_resposta.startswith("```"):
-                texto_resposta = (
-                    texto_resposta.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-                )
-
-            paineis_json = json.loads(texto_resposta)
+            paineis_json = json.loads(response.text)
 
             # 3. Monta o H5P
             content_h5p = {
