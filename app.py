@@ -100,8 +100,8 @@ if btn_gerar:
             molde_bytes = base64.b64decode(b64_string)
             molde_buffer = io.BytesIO(molde_bytes)
 
-            # 2. Chama a API do Gemini (forçando a api_version v1)
-            client = genai.Client(api_key=api_key, http_options={'api_version': 'v1'})
+            # 2. Chama a API do Gemini
+            client = genai.Client(api_key=api_key)
             prompt = f"""Você é um assistente pedagógico. Crie um conteúdo para a ferramenta Accordion do H5P.
 Tema: {tema}
 Número de painéis: {num_paineis}
@@ -118,10 +118,30 @@ Formato obrigatório:
   }}
 ]"""
 
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-            )
+            # Lista de modelos ordenados do mais recente ao de fallback
+            modelos_disponiveis = [
+                "gemini-3.6-flash",
+                "gemini-2.5-flash",
+                "gemini-1.5-flash"
+            ]
+
+            response = None
+            ultimo_erro = None
+
+            for mod in modelos_disponiveis:
+                try:
+                    response = client.models.generate_content(
+                        model=mod,
+                        contents=prompt,
+                    )
+                    if response:
+                        break
+                except Exception as err:
+                    ultimo_erro = err
+                    continue
+
+            if not response:
+                raise Exception(f"Falha ao chamar a API do Gemini: {ultimo_erro}")
 
             texto_resposta = response.text.strip()
             if texto_resposta.startswith("```"):
