@@ -34,7 +34,7 @@ def obter_molde_base64() -> str:
 
 
 # Cabeçalho
-st.title("Gerador de Accordion H5P", anchor="False")
+st.title("Gerador de Accordion H5P", anchor=False)
 st.divider()
 
 col_form, col_info = st.columns([1, 1], gap="large")
