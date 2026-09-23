@@ -17,7 +17,7 @@ except ImportError:
 
 # Configuração da página
 st.set_page_config(
-    page_title="Gerador de Accordion H5P", page_icon="🗂️", layout="wide"
+    page_title="Gerador de Accordion H5P", layout="wide"
 )
 
 # Recupera chave da API (localmente do .env ou das Secrets do Streamlit Cloud)
@@ -35,9 +35,6 @@ def obter_molde_base64() -> str:
 
 # Cabeçalho
 st.title("Gerador de Accordion H5P")
-st.write(
-    "Passe um tema e um texto opcional — a IA organiza em painéis expansíveis."
-)
 st.divider()
 
 col_form, col_info = st.columns([1, 1], gap="large")
@@ -55,7 +52,7 @@ with col_form:
 
     texto_fonte = st.text_area(
         "Texto fonte",
-        help="Quando presente, o conteúdo sai daqui.",
+        help="Adicionar material de apoio gera resultados mais personalizados.",
         placeholder="Cole aqui o texto que deve ser organizado...",
     )
 
@@ -76,8 +73,12 @@ with col_info:
     with status_container:
         st.subheader("Status da Geração")
         status_area = st.empty()
+        
+        # Reservando a área do botão logo abaixo da mensagem de status
+        download_area = st.empty()
+
         status_area.info(
-            "Preencha o tema e clique em gerar para criar o pacote H5P."
+            "Preencha os campos e clique em gerar para criar o Accordion H5P."
         )
 
 # Processamento ao clicar no botão
@@ -89,7 +90,7 @@ if btn_gerar:
             "Chave GEMINI_API_KEY não foi encontrada nas variáveis de ambiente ou Secrets."
         )
     else:
-        status_area.text("⏳ Gerando conteúdo com IA...")
+        status_area.text("Gerando conteúdo com IA...")
 
         try:
             # 1. Carrega o molde
@@ -120,7 +121,6 @@ Formato obrigatório de cada item:
   }}
 ]"""
 
-            # Modelos recomendados em ordem de preferência
             modelos_para_tentar = [
                 "gemini-3.5-flash-lite",
                 "gemini-3.8-flash",
@@ -212,17 +212,16 @@ Formato obrigatório de cada item:
             ).rstrip()
             nome_arquivo = f"accordion_{nome_sanitizado}.h5p"
 
-            status_area.success(
-                "✅ Arquivo gerado com sucesso! Clique no botão abaixo para baixar."
-            )
+            status_area.success("Arquivo gerado com sucesso!")
 
-            # Botão de Download do Streamlit
-            st.download_button(
-                label="📥 Baixar arquivo .h5p",
+            # Exibe o botão de download dentro da caixa de status, logo abaixo do texto
+            download_area.download_button(
+                label="Baixar arquivo .h5p",
                 data=output_buffer.getvalue(),
                 file_name=nome_arquivo,
                 mime="application/zip",
                 type="primary",
+                use_container_width=True
             )
 
         except Exception as e:
