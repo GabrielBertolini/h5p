@@ -101,7 +101,7 @@ if btn_gerar:
             molde_bytes = base64.b64decode(b64_string)
             molde_buffer = io.BytesIO(molde_bytes)
 
-            # 2. Inicializa o cliente e chama a API
+            # 2. Inicializa o cliente e faz a chamada à API do Gemini
             client = genai.Client(api_key=api_key)
 
             prompt = f"""Você é um assistente pedagógico. Crie um conteúdo para a ferramenta Accordion do H5P.
@@ -111,27 +111,47 @@ Extensão aproximada: {extensao}
 Instruções adicionais: {instrucao}
 Texto base: {texto_fonte}
 
-Crie uma lista JSON de painéis.
-Formato obrigatório por item:
+Gere uma lista JSON válida contendo os painéis.
+Formato obrigatório de cada item:
 [
   {{
     "title": "Título do Painel",
-    "content": "<p>Conteúdo do painel em HTML.</p>"
+    "content": "<p>Conteúdo em HTML para o painel.</p>"
   }}
 ]"""
 
-            # Chamada com resposta forçada em JSON e modelo atualizado
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                ),
-            )
+            # Modelos recomendados em ordem de preferência
+            modelos_para_tentar = [
+                "gemini-3.5-flash-lite",
+                "gemini-3.8-flash",
+                "gemini-3.6-flash"
+            ]
 
-            paineis_json = json.loads(response.text)
+            texto_resposta = None
+            ultimo_erro = None
 
-            # 3. Monta o H5P
+            for mod in modelos_para_tentar:
+                try:
+                    response = client.models.generate_content(
+                        model=mod,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json"
+                        ),
+                    )
+                    if response and response.text:
+                        texto_resposta = response.text
+                        break
+                except Exception as err:
+                    ultimo_erro = err
+                    continue
+
+            if not texto_resposta:
+                raise Exception(f"Erro ao conectar com modelos Gemini: {ultimo_erro}")
+
+            paineis_json = json.loads(texto_resposta)
+
+            # 3. Monta o pacote H5P
             content_h5p = {
                 "panels": [
                     {
